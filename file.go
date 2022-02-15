@@ -1,12 +1,99 @@
 package nmapservices
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 )
+
+// NmapServicesFileUrl is the online location of the nmap-services file.
+var NmapServicesFileUrl = "https://raw.githubusercontent.com/nmap/nmap/master/nmap-services"
+
+// NmapServicesFiles are typical filesystem locations of the nmap-services file.
+var NmapServicesFiles = []string{
+	"/usr/share/nmap/nmap-services",
+	"/usr/local/share/nmap/nmap-services",
+}
+
+// GetServices extract Services from nmap-services file. First if tries
+// NmapServicesFiles. If none is present present it downloads the file from
+// NmapServicesFileUrl.
+func GetServices() ([]Service, error) {
+	var nmapServicesFile string
+
+	for _, f := range NmapServicesFiles {
+		if _, err := os.Open(f); err == nil {
+			nmapServicesFile = f
+			break
+		}
+	}
+
+	if nmapServicesFile == "" {
+		nmapServicesFile = "/var/tmp/nmap-services"
+		if err := updateFile(nmapServicesFile, NmapServicesFileUrl); err != nil {
+			return nil, err
+		}
+	}
+
+	file, err := os.Open(nmapServicesFile)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	services, err := parseServiceFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
+func parseServiceFile(file *os.File) ([]Service, error) {
+	var ss []Service
+
+	input := bufio.NewScanner(file)
+	ws := regexp.MustCompile(`\s+`)
+	for input.Scan() {
+		if strings.HasPrefix(input.Text(), "#") { // skip comments
+			continue
+		}
+		parts := ws.Split(input.Text(), 4)
+		freq, err := strconv.ParseFloat(parts[2], 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var comment string
+		if len(parts) == 4 {
+			comment = parts[3]
+		}
+		portProto := strings.Split(parts[1], "/")
+		p, err := strconv.Atoi(portProto[0])
+		if err != nil {
+			return nil, err
+		}
+		svc := Service{
+			Name:      parts[0],
+			Port:      int16(p),
+			Protocol:  portProto[1],
+			Frequency: freq,
+			Comment:   comment,
+		}
+		ss = append(ss, svc)
+	}
+	if err := input.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return ss, nil
+}
 
 // updateFile updates file from url if the file is older than a week. If file
 // does not exist it downloads and creates it.

@@ -22,3 +22,27 @@ func TestTop(t *testing.T) {
 		}
 	}
 }
+
+func TestTopTcp(t *testing.T) {
+	services, err := TopTcp(27425)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range services {
+		if s.Protocol != "tcp" {
+			t.Fatalf("wanted tcp, got %s", s.Protocol)
+		}
+	}
+}
+
+func TestTopUdp(t *testing.T) {
+	services, err := TopUdp(27425)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range services {
+		if s.Protocol != "udp" {
+			t.Fatalf("wanted tcp, got %s", s.Protocol)
+		}
+	}
+}
