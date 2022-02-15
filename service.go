@@ -13,10 +13,10 @@ import (
 )
 
 type Service struct {
-	name      string
-	portProto string // e.g. 22/tcp
-	frequency float64
-	comment   string // optional
+	Name      string
+	PortProto string // e.g. 22/tcp
+	Frequency float64
+	Comment   string // optional
 }
 
 type Services []Service
@@ -40,10 +40,10 @@ func parseServiceFile(file *os.File) (Services, error) {
 			comment = parts[3]
 		}
 		svc := Service{
-			name:      parts[0],
-			portProto: parts[1],
-			frequency: freq,
-			comment:   comment,
+			Name:      parts[0],
+			PortProto: parts[1],
+			Frequency: freq,
+			Comment:   comment,
 		}
 		ss = append(ss, svc)
 	}
@@ -64,7 +64,7 @@ func (ss Services) print(top uint, noHeader bool) {
 		fmt.Fprintf(tw, format, "-----", "---------", "---------", "-------")
 	}
 	for _, s := range ss[:top] {
-		fmt.Fprintf(tw, format, s.name, s.portProto, s.frequency, s.comment)
+		fmt.Fprintf(tw, format, s.Name, s.PortProto, s.Frequency, s.Comment)
 	}
 	tw.Flush() // calculate column widths and print table
 }
@@ -72,5 +72,5 @@ func (ss Services) print(top uint, noHeader bool) {
 type byFrequency Services
 
 func (x byFrequency) Len() int           { return len(x) }
-func (x byFrequency) Less(i, j int) bool { return x[i].frequency < x[j].frequency }
+func (x byFrequency) Less(i, j int) bool { return x[i].Frequency < x[j].Frequency }
 func (x byFrequency) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
