@@ -13,49 +13,6 @@ import (
 	"time"
 )
 
-// NmapServicesFileUrl is the online location of the nmap-services file.
-var NmapServicesFileUrl = "https://raw.githubusercontent.com/nmap/nmap/master/nmap-services"
-
-// NmapServicesFiles are typical filesystem locations of the nmap-services file.
-var NmapServicesFiles = []string{
-	"/usr/share/nmap/nmap-services",
-	"/usr/local/share/nmap/nmap-services",
-}
-
-// GetServices extract Services from nmap-services file. First if tries
-// NmapServicesFiles. If none is present present it downloads the file from
-// NmapServicesFileUrl.
-func GetServices() ([]Service, error) {
-	var nmapServicesFile string
-
-	for _, f := range NmapServicesFiles {
-		if _, err := os.Open(f); err == nil {
-			nmapServicesFile = f
-			break
-		}
-	}
-
-	if nmapServicesFile == "" {
-		nmapServicesFile = "/var/tmp/nmap-services"
-		if err := updateFile(nmapServicesFile, NmapServicesFileUrl); err != nil {
-			return nil, err
-		}
-	}
-
-	file, err := os.Open(nmapServicesFile)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	services, err := parseServiceFile(file)
-	if err != nil {
-		return nil, err
-	}
-
-	return services, nil
-}
-
 func parseServiceFile(file *os.File) ([]Service, error) {
 	var ss []Service
 

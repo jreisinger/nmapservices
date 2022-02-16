@@ -3,8 +3,18 @@
 package nmapservices
 
 import (
+	"os"
 	"sort"
 )
+
+// NmapServicesFileUrl is the online location of the nmap-services file.
+var NmapServicesFileUrl = "https://raw.githubusercontent.com/nmap/nmap/master/nmap-services"
+
+// NmapServicesFiles are typical filesystem locations of the nmap-services file.
+var NmapServicesFiles = []string{
+	"/usr/share/nmap/nmap-services",
+	"/usr/local/share/nmap/nmap-services",
+}
 
 // Service represents a network service.
 type Service struct {
@@ -15,52 +25,69 @@ type Service struct {
 	Comment   string // optional
 }
 
-// Top returns n services that are found most frequently on the Internet.
-func Top(n int) ([]Service, error) {
-	services, err := GetServices()
+type Services []Service
+
+// Get extract Services from nmap-services file. First if tries
+// NmapServicesFiles. If none is present locally it downloads the file from
+// NmapServicesFileUrl.
+func Get() (Services, error) {
+	var nmapServicesFile string
+
+	for _, f := range NmapServicesFiles {
+		if _, err := os.Open(f); err == nil {
+			nmapServicesFile = f
+			break
+		}
+	}
+
+	if nmapServicesFile == "" {
+		nmapServicesFile = "/var/tmp/nmap-services"
+		if err := updateFile(nmapServicesFile, NmapServicesFileUrl); err != nil {
+			return nil, err
+		}
+	}
+
+	file, err := os.Open(nmapServicesFile)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	services, err := parseServiceFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	return getTopN(services, n), nil
+	return services, nil
 }
 
-// TopTcp returns n services using TCP protocol that are found most frequently
-// on the Internet.
-func TopTcp(n int) ([]Service, error) {
-	services, err := GetServices()
-	if err != nil {
-		return nil, err
-	}
+// Top returns n services that are found most frequently on the Internet.
+func (services Services) Top(n int) Services {
+	return getTopN(services, n)
+}
 
-	var t []Service
+// Tcp returns services using TCP protocol.
+func (services Services) Tcp() Services {
+	var t Services
 	for _, s := range services {
 		if s.Protocol == "tcp" {
 			t = append(t, s)
 		}
 	}
 	services = t
-
-	return getTopN(services, n), nil
+	return services
 }
 
-// TopUdp returns n services using UDP protocol that are found most frequently
-// on the Internet.
-func TopUdp(n int) ([]Service, error) {
-	services, err := GetServices()
-	if err != nil {
-		return nil, err
-	}
-
-	var t []Service
+// Udp returns services using UDP protocol.
+func (services Services) Udp() Services {
+	var t Services
 	for _, s := range services {
 		if s.Protocol == "udp" {
 			t = append(t, s)
 		}
 	}
 	services = t
-
-	return getTopN(services, n), nil
+	return services
 }
 
 func getTopN(services []Service, n int) []Service {
