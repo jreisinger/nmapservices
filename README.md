@@ -1,5 +1,3 @@
-See https://pkg.go.dev/github.com/jreisinger/nmapservices.
-
 Sample use:
 
 ```go
@@ -37,3 +35,5 @@ func main() {
  9.   445 # microsoft-ds
 10.   139 # netbios-ssn
 ```
+
+See https://pkg.go.dev/github.com/jreisinger/nmapservices for more.
