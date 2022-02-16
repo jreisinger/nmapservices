@@ -1,4 +1,4 @@
-Sample use:
+Sample use
 
 ```go
 package main
@@ -22,6 +22,8 @@ func main() {
 	}
 }
 ```
+
+Output
 
 ```
  1.    80 # http
