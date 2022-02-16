@@ -7,8 +7,8 @@ import (
 	"sort"
 )
 
-// NmapServicesFileUrl is the online location of the nmap-services file.
-var NmapServicesFileUrl = "https://raw.githubusercontent.com/nmap/nmap/master/nmap-services"
+// NmapServicesUrl is the online location of the nmap-services file.
+var NmapServicesUrl = "https://raw.githubusercontent.com/nmap/nmap/master/nmap-services"
 
 // NmapServicesFiles are typical filesystem locations of the nmap-services file.
 var NmapServicesFiles = []string{
@@ -27,9 +27,9 @@ type Service struct {
 
 type Services []Service
 
-// Get extract Services from nmap-services file. First if tries
+// Get extracts Services from nmap-services file. First if tries
 // NmapServicesFiles. If none is present locally it downloads the file from
-// NmapServicesFileUrl.
+// NmapServicesUrl.
 func Get() (Services, error) {
 	var nmapServicesFile string
 
@@ -42,7 +42,7 @@ func Get() (Services, error) {
 
 	if nmapServicesFile == "" {
 		nmapServicesFile = "/var/tmp/nmap-services"
-		if err := updateFile(nmapServicesFile, NmapServicesFileUrl); err != nil {
+		if err := updateFile(nmapServicesFile, NmapServicesUrl); err != nil {
 			return nil, err
 		}
 	}
